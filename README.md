@@ -2,52 +2,68 @@
 
 A tiny daily task app. Tasks float as bubbles. Tap one, confirm, and pop it when it’s done. Unfinished tasks stick around until you deal with them. No accounts, no history, no clutter.
 
-## Features
+## Two versions in this repo
 
-- Floating bubble tasks with soft physics
-- Confirm-before-pop (no accidental completes)
-- Satisfying pop animation + sound
-- Unfinished tasks persist in your browser (local storage)
-- Mobile-first, installable as a home-screen web app
+| Version | Where | Host with |
+| --- | --- | --- |
+| **Static HTML** (simple) | [`docs/`](./docs/) | **GitHub Pages** — no build step |
+| **Full app** (React + TanStack Start) | repo root (`src/`, Vite) | **Vercel** — needs a build |
 
-## Local development
+Same product behavior: floating bubbles, confirm-to-pop, pop SFX, localStorage carry-over (`pop-today-tasks`).
+
+---
+
+## Static HTML (recommended if you want “just put it online”)
+
+Files:
+
+- `docs/index.html`
+- `docs/styles.css`
+- `docs/app.js`
+- `docs/favicon.svg`, `docs/apple-touch-icon.png`, `docs/manifest.webmanifest`
+
+### Enable GitHub Pages
+
+1. Repo **Settings → Pages**
+2. **Source:** Deploy from a branch
+3. **Branch:** `main` → folder **`/docs`**
+4. Save
+
+After a minute you’ll get something like:
+
+`https://willyrelwitten.github.io/pop/`
+
+Open that on your phone → Share → **Add to Home Screen**.
+
+You can also open `docs/index.html` locally in a browser (double-click or any static server).
+
+---
+
+## Full React app (Vercel)
 
 ```bash
 npm install
-npm run dev
+npm run dev        # local
+npm run build
+npm run typecheck
 ```
 
-Open the URL Vite prints (usually `http://localhost:8080`).
+Deploy: import this repo on [vercel.com/new](https://vercel.com/new) → Deploy.
 
-```bash
-npm run build      # production build
-npm run typecheck  # TypeScript
-```
+The full app is the original build (TypeScript, TanStack Start, Tailwind, Zustand). Keep it if you want that deploy path later; day-to-day use can be the static `docs/` site.
 
-## Deploy (Vercel — recommended)
+---
 
-This app is set up for **Vercel** (TanStack Start + Nitro).
+## Features (both versions)
 
-1. Push this repo to GitHub (already done if you’re reading this).
-2. Go to [vercel.com/new](https://vercel.com/new) and import the repo.
-3. Leave defaults → Deploy.
-
-After deploy you’ll get a public URL you can share or add to your phone home screen.
-
-### Optional: custom domain
-
-In the Vercel project → **Settings → Domains**, add something like `pop.yourdomain.com`.
-
-## Stack
-
-- React 19 + TypeScript
-- TanStack Start / Router
-- Tailwind CSS v4
-- Zustand (persisted tasks)
-- Vite
+- Floating bubble tasks with soft physics  
+- Confirm before complete (no accidental pops)  
+- Satisfying pop animation + sound  
+- Unfinished tasks persist in the browser  
+- Mobile-first, installable feel  
 
 ## Notes
 
-- Tasks never leave your device — they live in `localStorage` under the key `pop-today-tasks`.
-- Completing a task is permanent in the app (no history on purpose).
-- Audio unlocks on first tap (mobile browser policy).
+- Tasks stay on your device (localStorage).  
+- Completing a task is permanent in the app (no history on purpose).  
+- Easter eggs brainstormed, not shipped yet.
