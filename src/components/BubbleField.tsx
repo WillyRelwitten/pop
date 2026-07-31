@@ -7,7 +7,13 @@ import {
   type CSSProperties,
 } from "react";
 import type { Task } from "@/lib/tasks-store";
-import { playPopSound, unlockAudio } from "@/lib/pop-sound";
+import { isChampagneEgg } from "@/lib/easter-eggs";
+import {
+  playChampagneCork,
+  playClubSting,
+  playPopSound,
+  unlockAudio,
+} from "@/lib/pop-sound";
 import { ConfirmDone } from "./ConfirmDone";
 
 type BubbleBody = {
@@ -29,6 +35,7 @@ type Particle = {
   dx: number;
   dy: number;
   hue: number;
+  champagne?: boolean;
 };
 
 function bubbleRadius(text: string, fieldW: number) {
@@ -45,9 +52,10 @@ function randomIn(min: number, max: number) {
 type Props = {
   tasks: Task[];
   onRemove: (id: string) => void;
+  onChampagne?: () => void;
 };
 
-export function BubbleField({ tasks, onRemove }: Props) {
+export function BubbleField({ tasks, onRemove, onChampagne }: Props) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const bodiesRef = useRef<Map<string, BubbleBody>>(new Map());
   const [renderIds, setRenderIds] = useState<string[]>([]);
@@ -197,44 +205,68 @@ export function BubbleField({ tasks, onRemove }: Props) {
     return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
-  const spawnParticles = useCallback((x: number, y: number) => {
-    const next: Particle[] = Array.from({ length: 14 }, (_, i) => {
-      const angle = (Math.PI * 2 * i) / 14 + randomIn(-0.2, 0.2);
-      const dist = randomIn(40, 88);
+  const spawnParticles = useCallback((x: number, y: number, champagne = false) => {
+    const count = champagne ? 42 : 14;
+    const next: Particle[] = Array.from({ length: count }, (_, i) => {
+      const angle = (Math.PI * 2 * i) / count + randomIn(-0.25, 0.25);
+      const dist = champagne ? randomIn(60, 160) : randomIn(40, 88);
       return {
-        id: `${Date.now()}-${i}`,
-        x,
-        y,
+        id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+        x: x + (champagne ? randomIn(-12, 12) : 0),
+        y: y + (champagne ? randomIn(-12, 12) : 0),
         dx: Math.cos(angle) * dist,
-        dy: Math.sin(angle) * dist,
+        dy: Math.sin(angle) * dist - (champagne ? randomIn(20, 70) : 0),
         hue: i,
+        champagne,
       };
     });
     setParticles((p) => [...p, ...next]);
-    window.setTimeout(() => {
-      setParticles((p) => p.filter((pt) => !next.some((n) => n.id === pt.id)));
-    }, 500);
+    window.setTimeout(
+      () => {
+        setParticles((p) => p.filter((pt) => !next.some((n) => n.id === pt.id)));
+      },
+      champagne ? 1100 : 500,
+    );
   }, []);
 
   const confirmPop = useCallback(() => {
     if (!pending) return;
     const body = bodiesRef.current.get(pending.id);
+    const champagne = isChampagneEgg(pending.text);
     unlockAudio();
-    playPopSound();
+
+    if (champagne) {
+      playChampagneCork();
+      playClubSting(5);
+      onChampagne?.();
+    } else {
+      playPopSound();
+    }
+
     if (body) {
       body.popping = true;
-      if (body.el) body.el.classList.add("is-popping");
-      spawnParticles(body.x, body.y);
-      window.setTimeout(() => {
-        bodiesRef.current.delete(pending.id);
-        setRenderIds((ids) => ids.filter((id) => id !== pending.id));
-        onRemove(pending.id);
-      }, 380);
+      if (body.el) {
+        body.el.classList.add("is-popping");
+        if (champagne) body.el.classList.add("is-champagne-pop");
+      }
+      spawnParticles(body.x, body.y, champagne);
+      if (champagne) {
+        window.setTimeout(() => spawnParticles(body.x, body.y - 20, true), 120);
+        window.setTimeout(() => spawnParticles(body.x, body.y + 10, true), 260);
+      }
+      window.setTimeout(
+        () => {
+          bodiesRef.current.delete(pending.id);
+          setRenderIds((ids) => ids.filter((id) => id !== pending.id));
+          onRemove(pending.id);
+        },
+        champagne ? 520 : 380,
+      );
     } else {
       onRemove(pending.id);
     }
     setPending(null);
-  }, [onRemove, pending, spawnParticles]);
+  }, [onChampagne, onRemove, pending, spawnParticles]);
 
   const setBubbleEl = useCallback(
     (id: string, el: HTMLButtonElement | null) => {
@@ -258,12 +290,13 @@ export function BubbleField({ tasks, onRemove }: Props) {
       {renderIds.map((id) => {
         const b = bodiesRef.current.get(id);
         if (!b) return null;
+        const egg = isChampagneEgg(b.text);
         return (
           <button
             key={id}
             ref={(el) => setBubbleEl(id, el)}
             type="button"
-            className="bubble-shell"
+            className={`bubble-shell ${egg ? "bubble-champagne" : ""}`}
             style={{
               left: b.x,
               top: b.y,
@@ -295,16 +328,16 @@ export function BubbleField({ tasks, onRemove }: Props) {
       {particles.map((p) => (
         <span
           key={p.id}
-          className="pop-particle"
+          className={`pop-particle ${p.champagne ? "pop-particle-gold" : ""}`}
           style={
             {
               left: p.x,
               top: p.y,
               "--dx": `${p.dx}px`,
               "--dy": `${p.dy}px`,
-              opacity: 0.9,
-              width: 5 + (p.hue % 3),
-              height: 5 + (p.hue % 3),
+              opacity: 0.95,
+              width: p.champagne ? 6 + (p.hue % 5) : 5 + (p.hue % 3),
+              height: p.champagne ? 6 + (p.hue % 5) : 5 + (p.hue % 3),
             } as CSSProperties
           }
         />

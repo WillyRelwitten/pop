@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { isChampagneEgg } from "@/lib/easter-eggs";
 
 type Props = {
   taskText: string;
@@ -8,6 +9,7 @@ type Props = {
 
 export function ConfirmDone({ taskText, onConfirm, onCancel }: Props) {
   const yesRef = useRef<HTMLButtonElement>(null);
+  const champagne = isChampagneEgg(taskText);
 
   useEffect(() => {
     yesRef.current?.focus();
@@ -27,21 +29,20 @@ export function ConfirmDone({ taskText, onConfirm, onCancel }: Props) {
       aria-labelledby="confirm-title"
       onClick={onCancel}
     >
-      <div
-        className="confirm-card"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
         <p
           id="confirm-title"
           className="text-[0.7rem] font-medium tracking-[0.14em] uppercase text-muted"
         >
-          Mark done
+          {champagne ? "Championship" : "Mark done"}
         </p>
         <p className="mt-2 font-display text-xl leading-snug tracking-tight text-fg">
           {taskText}
         </p>
         <p className="mt-2 text-sm leading-normal text-muted">
-          Pop it and it's gone for good.
+          {champagne
+            ? "Pop it like you just won the whole damn thing."
+            : "Pop it and it's gone for good."}
         </p>
         <div className="mt-5 grid grid-cols-2 gap-2">
           <button
@@ -57,7 +58,7 @@ export function ConfirmDone({ taskText, onConfirm, onCancel }: Props) {
             onClick={onConfirm}
             className="h-12 rounded-[calc(var(--radius-xl)-0.5rem)] bg-accent text-sm font-semibold text-accent-fg transition-transform duration-150 ease-out active:scale-[0.96]"
           >
-            Pop it
+            {champagne ? "Pop champagne" : "Pop it"}
           </button>
         </div>
       </div>
